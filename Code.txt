@@ -7,8 +7,6 @@ library(stringi)
 
 stopwords1 <- c("like", "know", "got", "see", "go", "yeah", "get", "oh", "can", "put", "said", "say", "em", "oi", "ain't", "gonna", "look", "let", "wanna")
 
-length(which(!complete.cases(punkSongs)))
-##This will tell you how many of the cases in 'allSongs' are not complete
 
 View(punkSongs)
 
@@ -72,7 +70,7 @@ for (i in 1:k) { # loop for each cluster
 ####                                         #######
 ####################################################
 
-grimeSongs <- read.csv("Data\\grimeSongs.csv", header=TRUE)
+grimeSongs <- read.csv("grimeSongs.csv", header=TRUE)
 colnames(grimeSongs)[colnames(grimeSongs) == "ï..ID"] <- "id"
 
 length(which(!complete.cases(grimeSongs)))
@@ -133,7 +131,7 @@ for (i in 1:k) { # loop for each cluster
 ###                                ###
 ######################################
 
-allSongs <- read.csv("Data\\allSongs.csv")
+allSongs <- read.csv("allSongs.csv")
 colnames(allSongs)[colnames(allSongs) == "ï..ID"] <- "id"
 allSongs$genre[allSongs$Artist == "Stormzy"] <- "grime"
 allSongs$genre[allSongs$Artist == "Wiley"] <- "grime"
