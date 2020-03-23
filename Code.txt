@@ -1,0 +1,221 @@
+setwd("C:\\Users\\Ed Wilson\\OneDrive\\Documents\\University Yr 3\\Dissertation")
+punkSongs <- read.csv("Data\\punkSongs.csv", header=TRUE)
+colnames(punkSongs)[colnames(punkSongs) == "ï..ID"] <- "id"
+
+
+library(quanteda)
+library(readtext)
+library(stringi)
+
+stopwords1 <- c("like", "know", "got", "see", "go", "yeah", "get", "oh", "can", "put", "said", "say", "em", "oi", "ain't", "gonna", "look", "let", "wanna")
+
+length(which(!complete.cases(punkSongs)))
+##This will tell you how many of the cases in 'allSongs' are not complete
+
+View(punkSongs)
+
+##R Thinks that Lyrics are a factor so need to transform into a character
+
+punkSongs$Lyrics <- as.character(punkSongs$Lyrics)
+
+punkSongs$song_number <- paste("No.", seq_len(nrow(punkSongs)), sep=" ")
+corpus_rawPunk <- corpus(punkSongs, text_field="Lyrics", docid_field="id")
+docvars(corpus_rawPunk, "song_numeric") <- seq_len(ndoc(corpus_rawPunk))
+
+##TEACHING R WHO WROTE WHAT
+
+docvars(corpus_rawPunk, "Artist") <- factor(NA, levels=c("Sex Pistols", "The Clash", "Crass"))
+docvars(corpus_rawPunk, "Artist")[c(1:20)] <- "Sex Pistols"
+docvars(corpus_rawPunk, "Artist")[c(20:149)] <- "The Clash"
+docvars(corpus_rawPunk, "Artist")[c(150:239)] <- "Crass"
+
+dfm_prepPunkless <- dfm(corpus_rawPunk, remove_numbers = TRUE, tolower = TRUE, remove_punct = TRUE, verbose = TRUE)
+
+dfm_songsPunkfull <- dfm(dfm_prepPunkless, remove = c(stopwords("english"), stopwords1), stem=TRUE,)
+
+
+set.seed(100)
+textplot_wordcloud(dfm_songsPunkfull[c(24, 94, 101), ], 
+			max_words=50, comparison = TRUE)
+			
+#OR YOU CAN DO WORDCLOUD FOR ALL SONGS
+		
+set.seed(100)
+textplot_wordcloud(dfm_songsPunkfull, max_words=250, )
+		
+#########################################################
+#########################################################
+##BELOW CATEGORISES PUNK SONGS INTO 10 LYRIC CATEGORIES##
+#########################################################
+#########################################################
+
+dfm_songsPunk_tfidf_Punk <- dfm_tfidf(dfm_songsPunkfull, base = 2)
+k <- 10
+
+km_out <- stats::kmeans(dfm_songsPunk_tfidf_Punk, centers = k)
+
+colnames(km_out$centers) <- featnames(dfm_songsPunk_tfidf_Punk)
+
+for (i in 1:k) { # loop for each cluster
+	cat("CLUSTER", i, "\n")
+	cat("Top 10 words:\n")
+	print(head(sort(km_out$centers[i, ], decreasing = TRUE), n=10))
+	cat("\n")
+	cat("Punk songs classified: \n")
+	print(docnames(dfm_songsPunk_tfidf_Punk)[km_out$cluster == i])
+	cat("\n")
+}
+
+		
+
+####################################################
+####                                         #######
+####                GRIME                    #######
+####                                         #######
+####################################################
+
+grimeSongs <- read.csv("Data\\grimeSongs.csv", header=TRUE)
+colnames(grimeSongs)[colnames(grimeSongs) == "ï..ID"] <- "id"
+
+length(which(!complete.cases(grimeSongs)))
+##This will tell you how many of the cases in 'allSongs' are not complete
+
+View(grimeSongs)
+
+##R Thinks that Lyrics are a factor so need to transform into a character
+
+grimeSongs$Lyrics <- as.character(grimeSongs$Lyrics)
+
+grimeSongs$song_number <- paste("No.", seq_len(nrow(grimeSongs)), sep=" ")
+corpus_rawGrime <- corpus(grimeSongs, text_field="Lyrics", docid_field="id")
+docvars(corpus_rawGrime, "song_numeric") <- seq_len(ndoc(corpus_rawGrime))
+
+##TEACHING R WHO WROTE WHAT
+
+docvars(corpus_rawGrime, "Artist") <- factor(NA, levels=c("Stormzy", "Skepta", "Wiley"))
+docvars(corpus_rawGrime, "Artist")[c(1:61)] <- "Stormzy"
+docvars(corpus_rawGrime, "Artist")[c(62:157)] <- "Skepta"
+docvars(corpus_rawGrime, "Artist")[c(158:438)] <- "Wiley"
+
+dfm_prepGrime <- dfm(corpus_rawGrime, remove_numbers = TRUE, tolower = TRUE, remove_punct = TRUE, verbose = TRUE)
+
+
+dfm_songsGrime <- dfm(dfm_prepGrime, remove = c(stopwords("english"), stopwords1), stem=TRUE, verbose=TRUE)
+
+set.seed(100)
+textplot_wordcloud(dfm_songsGrime, max_words=250, )
+
+######################
+######################
+###BELOW CATEGORISES GRIME SONGS INTO 10 LYRIC CATEGORIES
+######################
+######################
+
+dfm_songsGrime_tfidf <- dfm_tfidf(dfm_songsGrime, base = 2)
+k <- 10
+
+km_out <- stats::kmeans(dfm_songsGrime_tfidf, centers = k)
+
+colnames(km_out$centers) <- featnames(dfm_songsGrime_tfidf)
+
+for (i in 1:k) { # loop for each cluster
+	cat("CLUSTER", i, "\n")
+	cat("Top 10 words:\n")
+	print(head(sort(km_out$centers[i, ], decreasing = TRUE), n=10))
+	cat("\n")
+	cat("Grime songs classified: \n")
+	print(docnames(dfm_songsGrime_tfidf)[km_out$cluster == i])
+	cat("\n")
+}
+
+
+######################################
+###                                ###
+###         All Together Now       ###
+###                                ###
+######################################
+
+allSongs <- read.csv("Data\\allSongs.csv")
+colnames(allSongs)[colnames(allSongs) == "ï..ID"] <- "id"
+allSongs$genre[allSongs$Artist == "Stormzy"] <- "grime"
+allSongs$genre[allSongs$Artist == "Wiley"] <- "grime"
+allSongs$genre[allSongs$Artist == "Skepta"] <- "grime"
+allSongs$genre[allSongs$Artist == "Crass"] <- "punk"
+allSongs$genre[allSongs$Artist == "The Clash"] <- "punk"
+allSongs$genre[allSongs$Artist == "Sex Pistols"] <- "punk"
+
+
+allSongs$Lyrics <- as.character(allSongs$Lyrics)
+punkSongs$song_number <- paste("No.", seq_len(nrow(punkSongs)), sep=" ")
+corpus_All <- corpus(allSongs, text_field="Lyrics", docid_field="id")
+		
+
+docvars(corpus_All, "genre") <- factor(NA, levels=c("Punk", "Grime"))
+docvars(corpus_All, "genre")[c(1:239)] <- "Punk"
+docvars(corpus_All, "genre")[c(240:677)] <- "Grime"
+
+dfm_prepAll <- dfm(corpus_All, remove_numbers = TRUE, tolower = TRUE, remove_punct = TRUE, verbose = TRUE)
+
+
+dfm_songsAll <- dfm(dfm_prepAll, remove = c(stopwords("english"), stopwords1), verbose=TRUE, stem=TRUE)
+
+set.seed(100)
+textplot_wordcloud(dfm_songsAll, max_words=150, )
+
+
+######################################
+######################################
+###                                 ##
+###COMPARISON BETWEEN PUNK AND GRIME##
+###                                 ## 
+######################################
+######################################
+
+allSongs$songNumber <- 1:677
+
+
+corpus_All2 <- corpus(allSongs, text_field="Lyrics", docid_field="songNumber")
+
+docvars(corpus_All2, "Genre") <- factor(NA, levels=c("Punk", "Grime"))
+docvars(corpus_All2, "Genre")[c(1:239)] <- "Punk"
+docvars(corpus_All2, "Genre")[c(240:677)] <- "Grime"
+
+dfm_prepAll2 <- dfm(corpus_All2, remove_numbers = TRUE, tolower = TRUE, remove_punct = TRUE, remove = c(stopwords("english", stopwords1)), verbose = TRUE)
+
+dfm_songsAll2 <- dfm(dfm_prepAll2, verbose=TRUE, stem=TRUE)
+
+
+
+
+dfmAll3 <- dfm(corpus_subset(corpus_All2, Genre %in% c("Punk", "Grime")),
+	remove=c(stopwords("english"), stopwords1), remove_punct=TRUE, groups = "Genre") %>%
+	dfm_trim(min_termfreq=2)
+textplot_wordcloud(dfmAll3, comparison=TRUE, max_words=200,
+	col=c("red3", "navy"))
+
+
+
+
+######################
+######################
+###BELOW CATEGORISES ALL SONGS INTO 10 LYRIC CATEGORIES
+######################
+######################
+
+dfm_songsAll_tfidf <- dfm_tfidf(dfm_songsAll, base = 2)
+k <- 10
+
+
+km_out <- stats::kmeans(dfm_songsAll_tfidf, centers = k)
+
+colnames(km_out$centers) <- featnames(dfm_songsAll_tfidf)
+
+for (i in 1:k) { # loop for each cluster
+	cat("CLUSTER", i, "\n")
+	cat("Top 10 words:\n")
+	print(head(sort(km_out$centers[i, ], decreasing = TRUE), n=10))
+	cat("\n")
+	cat("All songs classified: \n")
+	print(docnames(dfm_songsAll_tfidf)[km_out$cluster == i])
+	cat("\n")
+}

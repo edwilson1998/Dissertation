@@ -1,0 +1,173 @@
+setwd("C:\\Users\\Ed Wilson\\OneDrive\\Documents\\University Yr 3\\Dissertation\\Data")
+library(quanteda)
+library(readtext)
+library(stringi)
+library(ggplot2)
+
+stopwords1 <- c("like", "know", "got", "see", "go", "yeah", "get", "oh", "can", "put", "said", "say", "em", "oi", "ain't", "gonna", "look", "let", "wanna")
+
+#########
+##GRIME##
+#########
+
+
+grimeSongs <- read.csv("grimeSongs.csv", header=TRUE)
+colnames(grimeSongs)[colnames(grimeSongs) == "ï..ID"] <- "id"
+
+length(which(!complete.cases(grimeSongs)))
+##This will tell you how many of the cases in 'allSongs' are not complete
+
+View(grimeSongs)
+
+##R Thinks that Lyrics are a factor so need to transform into a character
+
+grimeSongs$Lyrics <- as.character(grimeSongs$Lyrics)
+
+grimeSongs$song_number <- paste("No.", seq_len(nrow(grimeSongs)), sep=" ")
+corpus_raw <- corpus(grimeSongs, text_field="Lyrics", docid_field="song_number")
+docvars(corpus_raw, "song_numeric") <- seq_len(ndoc(corpus_raw))
+
+
+
+textCorpusGrime <- corpus(corpus_raw)
+
+textDFMGrime <- dfm(textCorpusGrime)
+
+textDFMGrimeCleanup <- dfm(textCorpusGrime, remove_numbers=TRUE, tolower=TRUE, remove_punct=TRUE, verbose=TRUE)
+
+textDFMGrimeMinimal <- dfm(textDFMGrimeCleanup, remove=c(stopwords("english"), stopwords1), stem=TRUE)
+
+textplot_wordcloud(textDFMGrimeMinimal, max_words = 200)
+
+
+
+#################
+###           ###
+### PUNKKKKKK ###
+###           ###
+#################
+
+
+
+punkSongs <- read.csv("punkSongs.csv", header=TRUE)
+colnames(punkSongs)[colnames(punkSongs) == "ï..ID"] <- "id"
+
+punkSongs$Lyrics <- as.character(punkSongs$Lyrics)
+
+punkSongs$song_number <- paste("No.", seq_len(nrow(punkSongs)), sep=" ")
+corpus_Punk <- corpus(punkSongs, text_field="Lyrics", docid_field="song_number")
+docvars(corpus_Punk, "song_numeric") <- seq_len(ndoc(corpus_Punk))
+
+
+textCorpusPunk <- corpus(corpus_Punk)
+
+textDFMPunk <- dfm(textCorpusPunk)
+
+textDFMPunkCleanup <- dfm(textCorpusPunk, remove_numbers=TRUE, tolower=TRUE, remove_punct=TRUE, verbose=TRUE)
+
+textDFMPunkMinimal <- dfm(textDFMPunkCleanup, remove=c(stopwords("english"), stopwords1), stem=TRUE)
+
+textplot_wordcloud(textDFMPunkMinimal, max_words = 200)
+
+textDFMPunkMinimalX <- dfm(textDFMPunkCleanup, remove=c(stopwords("english"), stopwords1))
+tstat_freqPunkX <- textstat_frequency(textDFMPunkMinimalX, n = 1000)
+
+textDFMPunkMinimal %>% 
+  textstat_frequency(n = 50) %>% 
+  ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
+  geom_point() +
+  coord_flip() +
+  theme(text = element_text(size=0.5)) +
+  labs(title = "Top 50 Words - Punk", x = "Words", y = "Frequency") +
+  theme_minimal()
+  
+
+#################################################
+##                                             ##
+##                                             ##
+##              Back to Grime                  ##
+##                                             ##
+##                                             ##
+#################################################
+
+grimeSongs <- read.csv("grimeSongs.csv", header=TRUE)
+colnames(grimeSongs)[colnames(grimeSongs) == "ï..ID"] <- "id"
+
+grimeSongs$Lyrics <- as.character(grimeSongs$Lyrics)
+
+grimeSongs$song_number <- paste("No.", seq_len(nrow(grimeSongs)), sep=" ")
+corpus_raw <- corpus(grimeSongs, text_field="Lyrics", docid_field="song_number")
+docvars(corpus_raw, "song_numeric") <- seq_len(ndoc(corpus_raw))
+textCorpusGrime <- corpus(corpus_raw)
+textDFMGrime <- dfm(textCorpusGrime)
+
+textDFMGrimeCleanup <- dfm(textCorpusGrime, remove_numbers=TRUE, tolower=TRUE, remove_punct=TRUE, verbose=TRUE)
+textDFMGrimeMinimal <- dfm(textDFMGrimeCleanup, remove=c(stopwords("english"), stopwords1), stem=TRUE)
+
+textplot_wordcloud(textDFMGrimeMinimal, max.words = 200)
+
+modelGrime <- textmodel_wordfish(textDFMGrimeMinimal, svd_sparse=FALSE)
+modelGrimeThetas <- modelGrime$theta
+
+mean(modelGrimeThetas)
+
+
+GrimeSimil <- textstat_simil(textDFMGrimeMinimal, c(), margin="documents", method="cosine")
+list(GrimeSimil)
+
+dotchart(as.list(GrimeSimil)$"No. 24", xlab = "Similarity to Shut Up")
+
+
+textDFMGrimeA <- dfm(textDFMGrimeCleanup, remove=c(stopwords("english"), stopwords1))
+tstat_freqGrime <- textstat_frequency(textDFMGrimeA, n = 1000)
+
+textDFMGrimeA %>% 
+  textstat_frequency(n = 50) %>% 
+  ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
+  geom_point() +
+  coord_flip() +
+  labs(title = "Top 50 Words - Grime", x = "Words", y = "Frequency") +
+  theme_minimal()
+  
+
+######################################
+###                                ###
+###         All Together Now       ###
+###                                ###
+######################################
+
+allSongs <- read.csv("allSongs.csv")
+colnames(allSongs)[colnames(allSongs) == "ï..ID"] <- "id"
+allSongs$genre[allSongs$Artist == "Stormzy"] <- "grime"
+allSongs$genre[allSongs$Artist == "Wiley"] <- "grime"
+allSongs$genre[allSongs$Artist == "Skepta"] <- "grime"
+allSongs$genre[allSongs$Artist == "Crass"] <- "punk"
+allSongs$genre[allSongs$Artist == "The Clash"] <- "punk"
+allSongs$genre[allSongs$Artist == "Sex Pistols"] <- "punk"
+
+allSongs$Lyrics <- as.character(allSongs$Lyrics)
+allSongs$song_number <- paste("No.", seq_len(nrow(allSongs)), sep=" ")
+corpus_All <- corpus(allSongs, text_field="Lyrics", docid_field="id")
+
+textDFMAll <- dfm(corpus_All)
+textDFMAllCleanup <- dfm(corpus_All, remove_numbers=TRUE, tolower=TRUE, remove_punct=TRUE, verbose=TRUE)
+textDFMAllMinimal <- dfm(textDFMAllCleanup, remove=c(stopwords("english"), stopwords1), stem=TRUE)
+AllSimil <- textstat_simil(textDFMAllMinimal, c(), margin="documents", method="cosine")
+list(AllSimil)
+dotchart(as.list(AllSimil)$"SP001", xlab = "Similarity to Anarchy in the UK")
+
+
+
+##Gives a frequency list below for all songs
+textDFMAllMinimalX <- dfm(textDFMAllCleanup, remove=c(stopwords("english"), stopwords1))
+tstat_freqAllX <- textstat_frequency(textDFMAllMinimalX, n = 1000)
+textDFMAllMinimalX %>% 
+  textstat_frequency(n = 50) %>% 
+  ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
+  geom_point() +
+  coord_flip() +
+  labs(title = "Top 50 Words - All Songs", x = "Word", y = "Frequency") +
+  theme_minimal()
+  
+  
+
