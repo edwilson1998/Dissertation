@@ -1,6 +1,4 @@
-setwd("C:\\Users\\Ed Wilson\\OneDrive\\Documents\\University Yr 3\\Dissertation")
-punkSongs <- read.csv("Data\\punkSongs.csv", header=TRUE)
-colnames(punkSongs)[colnames(punkSongs) == "ï..ID"] <- "id"
+colnames(punkSongs)[colnames(punkSongs) == "Ã¯..ID"] <- "id"
 
 
 library(quanteda)
@@ -75,7 +73,7 @@ for (i in 1:k) { # loop for each cluster
 ####################################################
 
 grimeSongs <- read.csv("Data\\grimeSongs.csv", header=TRUE)
-colnames(grimeSongs)[colnames(grimeSongs) == "ï..ID"] <- "id"
+colnames(grimeSongs)[colnames(grimeSongs) == "Ã¯..ID"] <- "id"
 
 length(which(!complete.cases(grimeSongs)))
 ##This will tell you how many of the cases in 'allSongs' are not complete
@@ -136,7 +134,7 @@ for (i in 1:k) { # loop for each cluster
 ######################################
 
 allSongs <- read.csv("Data\\allSongs.csv")
-colnames(allSongs)[colnames(allSongs) == "ï..ID"] <- "id"
+colnames(allSongs)[colnames(allSongs) == "Ã¯..ID"] <- "id"
 allSongs$genre[allSongs$Artist == "Stormzy"] <- "grime"
 allSongs$genre[allSongs$Artist == "Wiley"] <- "grime"
 allSongs$genre[allSongs$Artist == "Skepta"] <- "grime"
